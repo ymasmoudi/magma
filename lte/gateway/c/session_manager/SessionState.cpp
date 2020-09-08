@@ -1096,9 +1096,9 @@ static FinalActionInfo get_final_action_info(
       final_action_info.redirect_server = credit.redirect_server();
     }
     else if (credit.final_action() == ChargingCredit_FinalAction_RESTRICT_ACCESS) {
-        for (auto rule : credit.restrict_rules()) {
-          final_action_info.restrict_rules.push_back(rule);
-        }
+      for (auto rule : credit.restrict_rules()) {
+        final_action_info.restrict_rules.push_back(rule);
+      }
     }
   }
   return final_action_info;

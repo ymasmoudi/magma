@@ -25,7 +25,8 @@ ChargingGrant::ChargingGrant(const StoredChargingGrant& marshaled) {
   final_action_info.final_action = marshaled.final_action_info.final_action;
   final_action_info.redirect_server =
       marshaled.final_action_info.redirect_server;
-
+  final_action_info.restrict_rules =
+      marshaled.final_action_info.restrict_rules;
   reauth_state   = marshaled.reauth_state;
   service_state  = marshaled.service_state;
   expiry_time    = marshaled.expiry_time;

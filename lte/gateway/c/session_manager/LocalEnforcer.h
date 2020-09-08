@@ -232,7 +232,7 @@ class LocalEnforcer {
   static uint32_t REDIRECT_FLOW_PRIORITY;
 
  private:
-  struct FuaInstallInfo {
+  struct FinalActionInstallInfo {
     std::string imsi;
     std::string session_id;
     ServiceActionType action_type;
@@ -528,15 +528,15 @@ class LocalEnforcer {
    * Install flow for redirection through pipelined
    */
   void start_final_unit_action_flows_install(
-      SessionMap& session_map, const FuaInstallInfo info,
+      SessionMap& session_map, const FinalActionInstallInfo info,
       SessionUpdate& session_update);
 
   void complete_final_unit_action_flows_install(
       Status status, DirectoryField resp,
-      const FuaInstallInfo info);
+      const FinalActionInstallInfo info);
 
 
-  PolicyRule create_redirect_rule(const FuaInstallInfo& info);
+  PolicyRule create_redirect_rule(const FinalActionInstallInfo& info);
 
   bool rules_to_process_is_not_empty(const RulesToProcess& rules_to_process);
 
