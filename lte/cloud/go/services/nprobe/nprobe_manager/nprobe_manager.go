@@ -21,6 +21,7 @@ import (
 	"magma/lte/cloud/go/serdes"
 	"magma/lte/cloud/go/services/nprobe"
 	"magma/lte/cloud/go/services/nprobe/encoding"
+	"magma/lte/cloud/go/services/nprobe/exporter"
 	"magma/lte/cloud/go/services/nprobe/obsidian/models"
 	"magma/orc8r/cloud/go/services/configurator"
 	eventdC "magma/orc8r/cloud/go/services/eventd/eventd_client"
@@ -39,19 +40,23 @@ const (
 // service. It collects ES events, encode records and export
 // them to a remote collector server.
 type NProbeManager struct {
-	ElasticClient *elastic.Client
-	OperatorID    uint32
+	ElasticClient    *elastic.Client
+	Exporter         *exporter.RecordExporter
+	OperatorID       uint32
+	MaxExportRetries uint32
 }
 
 // NewNProbeManager creates and returns a new nprobe manager
-func NewNProbeManager(config nprobe.Config) (*NProbeManager, error) {
+func NewNProbeManager(config nprobe.Config, exporter *exporter.RecordExporter) (*NProbeManager, error) {
 	client, err := eventdC.GetElasticClient()
 	if err != nil {
 		return nil, err
 	}
 	return &NProbeManager{
-		ElasticClient: client,
-		OperatorID:    config.OperatorID,
+		ElasticClient:    client,
+		Exporter:         exporter,
+		MaxExportRetries: config.MaxExportRetries,
+		OperatorID:       config.OperatorID,
 	}, nil
 }
 
@@ -95,13 +100,19 @@ func (np *NProbeManager) processNProbeTask(networkID string, task *models.Networ
 		return err
 	}
 
-	// TBD -  retrieve seq nbr from subscriber state and export records
+	// TBD -  retrieve seq nbr from subscriber state
 	var seqNbr uint32 = 0
 	for _, event := range events {
-		_, err := encoding.MakeRecord(&event, task, np.OperatorID, seqNbr)
+		record, err := encoding.MakeRecord(&event, task, np.OperatorID, seqNbr)
 		if err != nil {
 			glog.Errorf("Failed to collect events for targetID %s: %s\n", targetID, err)
 			continue
+		}
+
+		err = np.Exporter.SendRecord(record, np.MaxExportRetries)
+		if err != nil {
+			glog.Errorf("Failed to export record for targetID %s: %s\n", targetID, err)
+			return err
 		}
 		seqNbr++
 	}
